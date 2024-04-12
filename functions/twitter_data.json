@@ -1,0 +1,53 @@
+from selenium import webdriver
+import time
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
+from config import DELAY, ACCOUNTS_PATH
+
+driver = webdriver.Chrome()
+driver.get("https://twitter.com/i/flow/login")
+input("Press Enter once you have logged in to Twitter...")
+
+with open(ACCOUNTS_PATH, 'r') as file:
+    links = file.readlines()
+
+for link in links:
+    link = link.strip()
+    link = link.split('?')[0]
+    if link[-1] == '/':
+        link = link[:-1]
+    link = link + '/followers'
+    driver.get(link)
+    time.sleep(5)
+    if link.startswith("https://twitter.com/i/lists/") or link.startswith("https://x.com/i/lists/"):
+        dialog = driver.find_element_by_xpath("//div[contains(@class, 'css-175oi2r') and contains(@class, 'r-1moyyf3') and contains(@class, 'r-1pp923h') and contains(@class, 'r-16y2uox') and contains(@class, 'r-1wbh5a2') and contains(@class, 'r-1dqxon3')]")
+        driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight;", dialog)
+        while True:
+            old_position = driver.execute_script("return arguments[0].scrollTop;", dialog)
+            time.sleep(1)
+            driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight;", dialog)
+            new_position = driver.execute_script("return arguments[0].scrollTop;", dialog)
+            if old_position == new_position:
+                break
+        driver.execute_script("arguments[0].scrollTop = 0;", dialog)
+        follow_btns = dialog.find_elements_by_xpath("//div[contains(@class, 'css-175oi2r') and contains(@class, 'r-sdzlij') and contains(@class, 'r-1phboty') and contains(@class, 'r-rs99b7') and contains(@class, 'r-lrvibr') and contains(@class, 'r-15ysp7h') and contains(@class, 'r-4wgw6l') and contains(@class, 'r-ymttw5') and contains(@class, 'r-1loqt21') and contains(@class, 'r-o7ynqc') and contains(@class, 'r-6416eg') and contains(@class, 'r-1ny4l3l') and @role='button']")
+        for follow_btn in follow_btns:
+            try:
+                driver.execute_script("arguments[0].scrollIntoView();", follow_btn)
+                driver.execute_script("arguments[0].click();", follow_btn)
+                time.sleep(DELAY)
+            except:
+                print("Failed to follow account. Skipping...")
+    else:
+        last_height = driver.execute_script("return document.body.scrollHeight")
+        acc_list = driver.find_element_by_xpath("//div[contains(@class, 'css-175oi2r') and contains(@class, 'r-kemksi') and contains(@class, 'r-1kqtdi0') and contains(@class, 'r-13l2t4g') and contains(@class, 'r-1ljd8xs') and contains(@class, 'r-1phboty') and contains(@class, 'r-16y2uox') and contains(@class, 'r-184en5c') and contains(@class, 'r-61z16t') and contains(@class, 'r-11wrixw') and contains(@class, 'r-1jgb5lz') and contains(@class, 'r-13qz1uu') and contains(@class, 'r-1ye8kvj')]")
+        follow_btns = acc_list.find_elements_by_xpath("//div[contains(@class, 'css-175oi2r') and contains(@class, 'r-sdzlij') and contains(@class, 'r-1phboty') and contains(@class, 'r-rs99b7') and contains(@class, 'r-lrvibr') and contains(@class, 'r-15ysp7h') and contains(@class, 'r-4wgw6l') and contains(@class, 'r-ymttw5') and contains(@class, 'r-1loqt21') and contains(@class, 'r-o7ynqc') and contains(@class, 'r-6416eg') and contains(@class, 'r-1ny4l3l') and @role='button']")
+        for follow_btn in follow_btns:
+            try:
+                driver.execute_script("arguments[0].scrollIntoView();", follow_btn)
+                driver.execute_script("arguments[0].click();", follow_btn)
+                time.sleep(DELAY)
+            except:
+                print("Failed to follow account. Skipping...")
+print("No more accounts to follow. Exiting...")
+driver.quit()
